@@ -17,13 +17,14 @@
               darkGray: '#1A1A1A'
             },
             fontFamily: {
-              mono: ['JetBrains Mono', 'monospace', 'ui-monospace']
+              mono: ['JetBrains Mono', 'monospace']
             }
           }
         }
       }
     </script>
     <style>
+      @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
       html, body {
         width: 380px;
         height: 600px;
@@ -32,10 +33,13 @@
         background-color: #0A0A0A;
         color: white;
         overflow: hidden;
+        font-family: 'JetBrains Mono', monospace;
       }
       #root {
         height: 100%;
         width: 100%;
+        display: flex;
+        flex-direction: column;
       }
       ::-webkit-scrollbar { width: 4px; }
       ::-webkit-scrollbar-track { background: #0A0A0A; }

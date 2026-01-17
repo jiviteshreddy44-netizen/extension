@@ -3,7 +3,7 @@
   "manifest_version": 3,
   "name": "fakey.ai",
   "version": "1.0.0",
-  "description": "Forensic AI media verification tool.",
+  "description": "Forensic AI and deepfake media verification tool.",
   "permissions": [
     "activeTab",
     "scripting",
@@ -24,7 +24,7 @@
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self' 'unsafe-eval' https://cdn.tailwindcss.com https://esm.sh; object-src 'self'; connect-src 'self' https://esm.sh https://generativelanguage.googleapis.com"
+    "extension_pages": "script-src 'self' https://cdn.tailwindcss.com https://esm.sh; object-src 'self'; connect-src 'self' https://esm.sh https://generativelanguage.googleapis.com"
   },
   "web_accessible_resources": [
     {

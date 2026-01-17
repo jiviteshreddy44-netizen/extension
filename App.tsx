@@ -1,14 +1,12 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { GoogleGenAI, Type } from '@google/genai';
 
-// Declare chrome global for TypeScript
 declare const chrome: any;
 
-// --- Types ---
 interface AnalysisResult {
   deepfake_score: number;
-  verdict: string;
+  verdict: 'Likely Real' | 'Uncertain' | 'Likely Deepfake';
   confidence: string;
   integrity: { score: number; notes: string };
   consistency: { score: number; notes: string };
@@ -23,257 +21,183 @@ enum AppStatus {
   ERROR = 'ERROR'
 }
 
-// --- Components ---
-
 const Header = ({ status }: { status: AppStatus }) => (
-  <header className="flex items-center justify-between p-4 border-b border-white/10 bg-charcoal sticky top-0 z-50">
+  <header className="flex items-center justify-between p-4 border-b border-white/10 bg-charcoal">
     <div className="flex items-center gap-2">
-      <div className="w-6 h-6 bg-neonGreen rounded-sm flex items-center justify-center font-bold text-charcoal text-xs">F</div>
-      <h1 className="text-xl font-bold tracking-tighter text-white">fakey<span className="text-neonGreen">.ai</span></h1>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2L3 7V17L12 22L21 17V7L12 2Z" stroke="#39FF14" strokeWidth="2"/>
+        <path d="M12 6V18M12 6L8 10M12 6L16 10" stroke="#39FF14" strokeWidth="2"/>
+      </svg>
+      <h1 className="text-lg font-bold tracking-tighter text-white">fakey<span className="text-neonGreen">.ai</span></h1>
     </div>
     <div className="flex items-center gap-2">
-      <div className={`w-2 h-2 rounded-full ${status === AppStatus.SCANNING ? 'bg-neonGreen animate-pulse' : 'bg-white/20'}`} />
-      <span className="text-[10px] uppercase tracking-widest text-white/50 font-mono">
-        {status}
-      </span>
+      <div className={`w-1.5 h-1.5 rounded-full ${status === AppStatus.SCANNING ? 'bg-neonGreen animate-pulse' : 'bg-white/20'}`} />
+      <span className="text-[9px] uppercase tracking-widest text-white/40 font-mono">{status}</span>
     </div>
   </header>
 );
 
-const ScoreCircle = ({ score, verdict }: { score: number; verdict: string }) => {
-  const color = score > 60 ? 'text-red-500' : score > 30 ? 'text-yellow-500' : 'text-neonGreen';
-  const strokeColor = score > 60 ? '#ef4444' : score > 30 ? '#eab308' : '#39FF14';
-
-  return (
-    <div className="flex flex-col items-center justify-center py-6">
-      <div className="relative w-32 h-32">
-        <svg className="w-full h-full" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="45" fill="transparent" stroke="#1A1A1A" strokeWidth="8" />
-          <circle 
-            cx="50" cy="50" r="45" fill="transparent" stroke={strokeColor} strokeWidth="8"
-            strokeDasharray="283"
-            strokeDashoffset={283 - (283 * score) / 100}
-            strokeLinecap="round"
-            className="transition-all duration-1000 ease-out"
-          />
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className={`text-3xl font-bold font-mono ${color}`}>{score}</span>
-          <span className="text-[10px] text-white/40 uppercase font-mono tracking-tighter">Likelihood</span>
-        </div>
-      </div>
-      <div className={`mt-4 px-4 py-1 rounded-full border ${color} border-current text-xs font-bold uppercase tracking-widest bg-black/50`}>
-        {verdict}
-      </div>
+const MetricItem = ({ label, score, notes }: { label: string; score: number; notes: string }) => (
+  <div className="py-3 border-b border-white/5 last:border-0">
+    <div className="flex justify-between items-center mb-1.5">
+      <span className="text-[10px] text-white/60 uppercase tracking-tighter">{label}</span>
+      <span className={`text-[11px] font-bold ${score > 60 ? 'text-red-500' : 'text-neonGreen'}`}>{score}%</span>
     </div>
-  );
-};
-
-const MetricRow = ({ label, score, notes }: { label: string; score: number; notes: string }) => (
-  <div className="p-3 border-b border-white/5 hover:bg-white/5 transition-colors">
-    <div className="flex justify-between items-center mb-1">
-      <span className="text-[11px] font-mono text-white/70 uppercase tracking-wider">{label}</span>
-      <span className={`text-xs font-mono ${score > 60 ? 'text-red-400' : 'text-neonGreen'}`}>{score}%</span>
-    </div>
-    <div className="w-full bg-darkGray h-1 mb-2">
+    <div className="w-full bg-white/5 h-0.5 mb-2">
       <div 
-        className={`h-full ${score > 60 ? 'bg-red-500' : 'bg-neonGreen'} transition-all duration-700`} 
+        className={`h-full transition-all duration-1000 ${score > 60 ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'bg-neonGreen shadow-[0_0_8px_rgba(57,255,20,0.5)]'}`} 
         style={{ width: `${score}%` }}
       />
     </div>
-    <p className="text-[10px] text-white/50 leading-relaxed italic">"{notes}"</p>
+    <p className="text-[9px] text-white/30 font-mono italic">{notes}</p>
   </div>
 );
-
-// --- Main App ---
 
 export default function App() {
   const [status, setStatus] = useState<AppStatus>(AppStatus.IDLE);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const performAnalysis = useCallback(async (base64Data: string) => {
+  const performAnalysis = async (dataUrl: string) => {
     try {
-      // Ensure we extract the pure base64 string without data:image/jpeg;base64, prefix
-      const cleanBase64 = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
-      
-      // Initializing GoogleGenAI with the named parameter apiKey
+      const base64Data = dataUrl.split(',')[1];
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const prompt = `Perform a forensic analysis of this screenshot to detect AI-generated content or deepfakes. Examine noise patterns, frequency domain artifacts, lighting inconsistencies, and anatomical errors. 
-      Return the analysis in JSON format.`;
-
-      // Calling generateContent with the model name 'gemini-3-flash-preview' for analysis
+      
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: [
-          { 
-            parts: [
-              { text: prompt }, 
-              { inlineData: { mimeType: 'image/jpeg', data: cleanBase64 } }
-            ] 
-          }
+          { parts: [
+            { text: "Analyze this image for deepfake artifacts (GAN noise, pixel consistency, anatomical errors). Provide a forensic breakdown." },
+            { inlineData: { mimeType: 'image/jpeg', data: base64Data } }
+          ]}
         ],
         config: {
           responseMimeType: "application/json",
           responseSchema: {
             type: Type.OBJECT,
             properties: {
-              deepfake_score: { type: Type.NUMBER, description: "Scale 0-100 where 100 is definitely deepfake" },
-              verdict: { type: Type.STRING },
+              deepfake_score: { type: Type.NUMBER },
+              verdict: { type: Type.STRING, enum: ['Likely Real', 'Uncertain', 'Likely Deepfake'] },
               confidence: { type: Type.STRING },
-              integrity: {
-                type: Type.OBJECT,
-                properties: { score: { type: Type.NUMBER }, notes: { type: Type.STRING } }
-              },
-              consistency: {
-                type: Type.OBJECT,
-                properties: { score: { type: Type.NUMBER }, notes: { type: Type.STRING } }
-              },
-              ai_pattern: {
-                type: Type.OBJECT,
-                properties: { score: { type: Type.NUMBER }, notes: { type: Type.STRING } }
-              },
-              temporal: {
-                type: Type.OBJECT,
-                properties: { score: { type: Type.NUMBER }, notes: { type: Type.STRING } }
-              }
+              integrity: { type: Type.OBJECT, properties: { score: { type: Type.NUMBER }, notes: { type: Type.STRING } }, required: ["score", "notes"] },
+              consistency: { type: Type.OBJECT, properties: { score: { type: Type.NUMBER }, notes: { type: Type.STRING } }, required: ["score", "notes"] },
+              ai_pattern: { type: Type.OBJECT, properties: { score: { type: Type.NUMBER }, notes: { type: Type.STRING } }, required: ["score", "notes"] },
+              temporal: { type: Type.OBJECT, properties: { score: { type: Type.NUMBER }, notes: { type: Type.STRING } }, required: ["score", "notes"] }
             },
             required: ["deepfake_score", "verdict", "integrity", "consistency", "ai_pattern", "temporal"]
           }
         }
       });
 
-      // Extracting text output from GenerateContentResponse
-      const responseText = response.text;
-      if (!responseText) throw new Error("Empty analysis response");
-      
-      const data = JSON.parse(responseText);
+      const data = JSON.parse(response.text || '{}');
       setResult(data);
       setStatus(AppStatus.COMPLETED);
     } catch (err: any) {
-      console.error('Analysis Error:', err);
-      setError(err.message || 'Analysis failed. The image might be too large or incompatible.');
+      setError(err.message || "Forensic node failure.");
       setStatus(AppStatus.ERROR);
     }
-  }, []);
+  };
 
-  const handleScan = async () => {
+  const startScan = () => {
     setStatus(AppStatus.SCANNING);
     setError(null);
-    setResult(null);
-
-    // Using the declared global chrome variable to communicate with the background script
-    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-      chrome.runtime.sendMessage({ action: "capture_tab" }, (response: any) => {
-        if (chrome.runtime.lastError) {
-          setError(chrome.runtime.lastError.message);
-          setStatus(AppStatus.ERROR);
-        } else if (response && response.dataUrl) {
-          performAnalysis(response.dataUrl);
-        } else if (response && response.error) {
-          setError(response.error);
-          setStatus(AppStatus.ERROR);
-        } else {
-          setError("Failed to capture screen.");
+    if (typeof chrome !== 'undefined' && chrome.runtime) {
+      chrome.runtime.sendMessage({ action: "capture_tab" }, (res: any) => {
+        if (res?.dataUrl) performAnalysis(res.dataUrl);
+        else {
+          setError(res?.error || "Capture denied by system.");
           setStatus(AppStatus.ERROR);
         }
       });
     } else {
-      // Development/Web environment fallback
-      console.warn("Chrome API not available, using fallback.");
       setTimeout(() => {
-        const fallbackImg = "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDAREAAhEBAxEB/8QAFAABAAAAAAAAAAAAAAAAAAAAAP/EABQQAQAAAAAAAAAAAAAAAAAAAAD/xAAUAQEAAAAAAAAAAAAAAAAAAAAA/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAboxj/2gAMAwEAAhEDEQA/AP/Z";
-        performAnalysis(fallbackImg);
+        setError("Extension environment not detected.");
+        setStatus(AppStatus.ERROR);
       }, 1000);
     }
   };
 
   return (
-    <div className="flex flex-col min-h-[500px] font-mono selection:bg-neonGreen selection:text-charcoal bg-charcoal">
+    <div className="flex flex-col h-full bg-charcoal text-white font-mono selection:bg-neonGreen selection:text-black">
       <Header status={status} />
 
-      <main className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto px-4">
         {status === AppStatus.IDLE && (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="w-16 h-16 border border-dashed border-white/20 rounded-full flex items-center justify-center mb-6">
-              <div className="w-2 h-2 bg-neonGreen rounded-full" />
+          <div className="flex flex-col items-center justify-center h-full text-center py-8">
+            <div className="mb-8 p-6 border border-white/5 bg-white/[0.02] rounded-lg">
+              <p className="text-[11px] text-white/50 leading-relaxed mb-4">
+                Verify on-screen media integrity using 
+                <span className="text-white"> neural frequency analysis</span>.
+              </p>
+              <div className="flex justify-center gap-4 text-[9px] uppercase tracking-widest text-white/30">
+                <span>// IMAGES</span>
+                <span>// VIDEO</span>
+                <span>// CANVAS</span>
+              </div>
             </div>
-            <h2 className="text-lg font-bold mb-2">Ready to Scan</h2>
-            <p className="text-xs text-white/50 mb-8 max-w-[200px]">
-              Forensic analysis of visible media elements on the current page.
-            </p>
+            
             <button 
-              onClick={handleScan}
-              className="group relative px-8 py-3 bg-neonGreen text-charcoal font-bold text-sm uppercase tracking-tighter hover:bg-white transition-all active:scale-95"
+              onClick={startScan}
+              className="w-full py-4 bg-neonGreen text-black font-bold uppercase tracking-tighter hover:bg-white transition-all active:scale-[0.98] border border-neonGreen"
             >
-              Scan Current Screen
-              <div className="absolute -inset-1 border border-neonGreen/30 -z-10 group-hover:-inset-2 transition-all opacity-0 group-hover:opacity-100" />
+              Scan This Screen
             </button>
-            <p className="mt-4 text-[10px] text-white/30 uppercase tracking-widest">Requires one-time permission</p>
+            <p className="mt-4 text-[9px] text-white/30 uppercase tracking-[0.2em]">Requires active tab permission</p>
           </div>
         )}
 
         {status === AppStatus.SCANNING && (
-          <div className="flex flex-col items-center justify-center py-16">
-            <div className="relative w-20 h-20 mb-6">
-              <div className="absolute inset-0 border-2 border-neonGreen/20 rounded-full" />
-              <div className="absolute inset-0 border-t-2 border-neonGreen rounded-full animate-spin" />
-              <div className="absolute inset-4 bg-neonGreen/10 rounded-full animate-pulse" />
-            </div>
-            <div className="space-y-2 text-center">
-              <p className="text-neonGreen text-xs font-bold animate-pulse">EXTRACTING FRAME DATA...</p>
-              <p className="text-[10px] text-white/40 font-mono">Running GAN detection heuristic</p>
-            </div>
+          <div className="flex flex-col items-center justify-center h-full py-12">
+            <div className="w-16 h-16 border border-neonGreen/20 border-t-neonGreen rounded-full animate-spin mb-6 shadow-[0_0_20px_rgba(57,255,20,0.2)]" />
+            <h2 className="text-neonGreen text-xs font-bold tracking-widest animate-pulse">EXTRACTING METADATA...</h2>
+            <p className="text-[9px] text-white/40 mt-2">Checking frequency domain artifacts</p>
           </div>
         )}
 
         {status === AppStatus.COMPLETED && result && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <ScoreCircle score={result.deepfake_score} verdict={result.verdict} />
-            
-            <div className="space-y-1 mt-4">
-              <MetricRow label="Integrity Check" score={result.integrity.score} notes={result.integrity.notes} />
-              <MetricRow label="Consistency" score={result.consistency.score} notes={result.consistency.notes} />
-              <MetricRow label="AI Pattern" score={result.ai_pattern.score} notes={result.ai_pattern.notes} />
-              <MetricRow label="Temporal Logic" score={result.temporal.score} notes={result.temporal.notes} />
+          <div className="py-4 space-y-6 animate-in fade-in slide-in-from-bottom-2">
+            <div className="p-4 bg-white/[0.03] border border-white/10 rounded-sm text-center">
+              <div className="text-[48px] font-bold tracking-tighter leading-none mb-1">
+                {result.deepfake_score}<span className="text-sm text-white/30 font-normal">%</span>
+              </div>
+              <div className={`text-[10px] font-bold uppercase tracking-widest inline-block px-3 py-1 rounded-sm border ${result.deepfake_score > 60 ? 'border-red-500 text-red-500' : 'border-neonGreen text-neonGreen'}`}>
+                {result.verdict}
+              </div>
             </div>
 
-            <div className="mt-8 p-4 bg-white/5 border border-white/10 text-[11px] leading-relaxed">
-              <h3 className="font-bold text-white mb-1 uppercase tracking-wider text-[10px]">Forensic Verdict</h3>
-              <p className="text-white/60">
-                Found {result.deepfake_score}% correlation with synthetic generation patterns. {result.verdict === 'Likely Deepfake' ? 'The content displays typical GAN or diffusion artifacts.' : 'Source patterns are within expected variance.'}
-              </p>
-              <div className="mt-3 flex items-center gap-2 text-neonGreen font-bold uppercase text-[9px]">
-                <span className="w-1 h-1 bg-neonGreen rounded-full" />
-                Protocol: Verify source before sharing
-              </div>
+            <div className="bg-black/40 border border-white/5 p-3">
+              <MetricItem label="Integrity" score={result.integrity.score} notes={result.integrity.notes} />
+              <MetricItem label="Consistency" score={result.consistency.score} notes={result.consistency.notes} />
+              <MetricItem label="AI Pattern" score={result.ai_pattern.score} notes={result.ai_pattern.notes} />
+              <MetricItem label="Temporal" score={result.temporal.score} notes={result.temporal.notes} />
+            </div>
+
+            <div className="text-[10px] text-white/40 leading-relaxed border-l-2 border-neonGreen pl-3">
+              <span className="text-neonGreen font-bold block mb-1">RECOMMENDATION:</span>
+              Verify source metadata before sharing. Forensic indicators suggest {result.deepfake_score}% non-human variance.
             </div>
 
             <button 
               onClick={() => setStatus(AppStatus.IDLE)}
-              className="w-full mt-6 py-3 border border-white/10 text-white/50 text-[10px] uppercase font-bold tracking-widest hover:text-white hover:border-white/30 transition-all"
+              className="w-full py-2 border border-white/10 text-white/40 text-[9px] uppercase hover:text-white transition-colors"
             >
-              Return to Control
+              Start New Analysis
             </button>
           </div>
         )}
 
         {status === AppStatus.ERROR && (
-          <div className="py-12 text-center">
-            <div className="text-red-500 mb-4 font-bold text-sm">Forensic Failure: {error}</div>
-            <button 
-              onClick={() => setStatus(AppStatus.IDLE)}
-              className="text-[10px] text-white/50 underline uppercase tracking-widest hover:text-white"
-            >
-              Reset Session
-            </button>
+          <div className="flex flex-col items-center justify-center h-full text-center">
+            <div className="text-red-500 text-xs font-bold mb-4 uppercase tracking-widest">Analysis Blocked</div>
+            <p className="text-[10px] text-white/40 mb-6 px-8">{error}</p>
+            <button onClick={() => setStatus(AppStatus.IDLE)} className="text-neonGreen text-[10px] underline uppercase font-bold">Retry Protocol</button>
           </div>
         )}
-      </main>
+      </div>
 
-      <footer className="p-4 border-t border-white/5 bg-charcoal text-[9px] text-white/30 font-mono flex justify-between uppercase tracking-widest">
-        <span>Unit // FKY-01</span>
-        <span>© fakey.ai 2025</span>
+      <footer className="p-3 border-t border-white/5 flex justify-between items-center text-[8px] text-white/20 uppercase tracking-[0.2em]">
+        <span>REF: FKY-MV3-2025</span>
+        <span className="text-neonGreenDim">Secure Channel Active</span>
       </footer>
     </div>
   );
