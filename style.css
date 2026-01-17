@@ -2,57 +2,110 @@
 :root {
   --charcoal: #0A0A0A;
   --neon-green: #39FF14;
-  --neon-green-dim: #28B20E;
-  --text-white: #FFFFFF;
-  --text-dim: rgba(255, 255, 255, 0.4);
+  --bg-card: rgba(255, 255, 255, 0.05);
 }
 
-@font-face {
-  font-family: 'JetBrains Mono';
-  src: local('JetBrains Mono');
-}
+* { box-sizing: border-box; }
 
-html, body {
+body {
   width: 380px;
-  height: 600px;
+  height: 550px;
   margin: 0;
-  padding: 0;
   background-color: var(--charcoal);
-  color: var(--text-white);
-  overflow: hidden;
+  color: white;
   font-family: 'JetBrains Mono', monospace;
+  overflow: hidden;
 }
 
-#root {
-  height: 100%;
-  width: 100%;
+.header {
+  padding: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo { margin: 0; font-size: 18px; font-weight: bold; }
+.accent { color: var(--neon-green); }
+
+.status-badge {
+  font-size: 9px;
+  color: var(--neon-green);
+  border: 1px solid var(--neon-green);
+  padding: 2px 6px;
+  letter-spacing: 1px;
+}
+
+.main-content {
+  flex: 1;
+  padding: 24px;
   display: flex;
   flex-direction: column;
+  justify-content: center;
 }
 
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: var(--charcoal); }
-::-webkit-scrollbar-thumb { background: var(--neon-green); }
+.idle-state { text-align: center; }
+.subtitle { font-size: 10px; opacity: 0.5; margin-bottom: 30px; letter-spacing: 1px; }
 
-@keyframes spin { 
-  to { transform: rotate(360deg); } 
+.scan-button {
+  width: 100%;
+  padding: 18px;
+  background-color: var(--neon-green);
+  color: black;
+  border: none;
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.scan-button:active { transform: scale(0.98); }
+
+.disclaimer { font-size: 9px; opacity: 0.4; margin-top: 12px; }
+
+.score-card {
+  background: var(--bg-card);
+  padding: 30px;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,0.1);
+  margin-bottom: 20px;
 }
 
-@keyframes fadeIn { 
-  from { opacity: 0; } 
-  to { opacity: 1; } 
+.score-value { font-size: 56px; font-weight: bold; line-height: 1; }
+.verdict-label { color: var(--neon-green); font-size: 12px; margin-top: 10px; font-weight: bold; }
+
+.details-grid { font-size: 10px; }
+.detail-item { margin-bottom: 15px; }
+.detail-item .label { color: var(--neon-green); display: block; margin-bottom: 4px; }
+.detail-item .note { opacity: 0.7; margin: 0; line-height: 1.4; }
+
+.reset-button {
+  width: 100%;
+  background: none;
+  border: 1px solid var(--neon-green);
+  color: var(--neon-green);
+  padding: 12px;
+  cursor: pointer;
+  font-weight: bold;
 }
 
 .spinner {
-  width: 40px; 
-  height: 40px; 
-  border: 2px solid var(--neon-green); 
-  border-top-color: transparent; 
-  border-radius: 50%; 
-  margin: 0 auto 16px; 
-  animation: spin 1s linear infinite;
+  width: 40px; height: 40px;
+  border: 2px solid var(--neon-green);
+  border-top-color: transparent;
+  border-radius: 50%;
+  margin: 0 auto 16px;
+  animation: spin 0.8s linear infinite;
 }
 
-.fade-in-container {
-  animation: fadeIn 0.5s forwards;
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.footer {
+  padding: 10px;
+  font-size: 8px;
+  opacity: 0.2;
+  text-align: center;
+  letter-spacing: 2px;
 }
+
+.error-msg { color: #ff4444; font-size: 11px; margin-bottom: 20px; }
+.retry-button { background: none; border: 1px solid #ff4444; color: #ff4444; padding: 10px; cursor: pointer; }
