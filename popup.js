@@ -1,10 +1,8 @@
+import { GoogleGenAI, Type } from "@google/genai";
+
 /**
  * fakey.ai - Core Forensic Logic
- * Vanilla JS implementation to satisfy strict Extension CSP (no inline scripts, no CDNs)
  */
-
-const API_KEY = ""; // Processed via build-time or injected during use. 
-// Note: In this environment, process.env.API_KEY is available during the transformation phase.
 
 const state = {
   status: 'IDLE', // IDLE, SCANNING, COMPLETED, ERROR
@@ -94,7 +92,7 @@ async function startScan() {
   chrome.runtime.sendMessage({ action: "capture_tab" }, async (response) => {
     if (chrome.runtime.lastError || !response || !response.dataUrl) {
       state.status = 'ERROR';
-      state.error = "Capture failed. Ensure the extension has permission to access the current tab.";
+      state.error = "Capture failed. Check tab permissions.";
       render();
       return;
     }
@@ -112,36 +110,42 @@ async function startScan() {
 async function performAnalysis(dataUrl) {
   const base64Data = dataUrl.split(',')[1];
   
-  // Use fetch directly to avoid importing @google/genai which triggers "octet-stream" errors in this specific setup
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(process.env.API_KEY)}`;
+  // Use official SDK initialization as per developer rules
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
-  const payload = {
-    contents: [{
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-flash-preview',
+    contents: {
       parts: [
-        { text: "Analyze this image for deepfake artifacts. Return JSON: {deepfake_score: number, verdict: string, integrity: {score: number, notes: string}, consistency: {score: number, notes: string}, ai_pattern: {score: number, notes: string}, temporal: {score: number, notes: string}}" },
+        { text: "Perform forensic analysis for AI generation. Return JSON." },
         { inlineData: { mimeType: "image/jpeg", data: base64Data } }
       ]
-    }],
-    generationConfig: {
-      responseMimeType: "application/json"
+    },
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          deepfake_score: { type: Type.NUMBER },
+          verdict: { type: Type.STRING },
+          integrity: { 
+            type: Type.OBJECT, 
+            properties: { score: { type: Type.NUMBER }, notes: { type: Type.STRING } },
+            required: ["score", "notes"]
+          },
+          ai_pattern: { 
+            type: Type.OBJECT, 
+            properties: { score: { type: Type.NUMBER }, notes: { type: Type.STRING } },
+            required: ["score", "notes"]
+          }
+        },
+        required: ["deepfake_score", "verdict", "integrity", "ai_pattern"]
+      }
     }
-  };
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
   });
 
-  if (!response.ok) {
-    const errorJson = await response.json();
-    throw new Error(errorJson.error?.message || "API error");
-  }
-
-  const resultData = await response.json();
-  const text = resultData.candidates?.[0]?.content?.parts?.[0]?.text;
-  
-  if (!text) throw new Error("Empty analysis result.");
+  const text = response.text;
+  if (!text) throw new Error("Empty forensic report.");
   
   state.result = JSON.parse(text);
   state.status = 'COMPLETED';
