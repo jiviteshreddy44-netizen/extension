@@ -1,6 +1,6 @@
 
-import React from 'react';
-import ReactDOM from 'react-dom/client';
+import React from 'https://esm.sh/react@19.2.3';
+import ReactDOM from 'https://esm.sh/react-dom@19.2.3/client';
 import App from './App';
 
 const rootElement = document.getElementById('root');
