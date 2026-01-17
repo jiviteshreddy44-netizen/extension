@@ -1,9 +1,8 @@
-
 {
   "manifest_version": 3,
   "name": "fakey.ai",
-  "version": "1.0.0",
-  "description": "Forensic AI and deepfake media verification tool.",
+  "version": "1.0.1",
+  "description": "Professional Forensic AI and deepfake verification tool.",
   "permissions": [
     "activeTab",
     "scripting",
@@ -12,7 +11,7 @@
   ],
   "action": {
     "default_popup": "index.html",
-    "default_title": "fakey.ai - Scan Media"
+    "default_title": "fakey.ai - Forensic Scan"
   },
   "background": {
     "service_worker": "background.js"
