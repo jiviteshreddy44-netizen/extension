@@ -24,7 +24,7 @@
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self' https://cdn.tailwindcss.com https://esm.sh; object-src 'self'; connect-src 'self' https://esm.sh https://generativelanguage.googleapis.com"
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://generativelanguage.googleapis.com"
   },
   "web_accessible_resources": [
     {

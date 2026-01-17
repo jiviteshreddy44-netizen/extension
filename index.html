@@ -5,33 +5,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>fakey.ai</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      window.tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              charcoal: '#0A0A0A',
-              neonGreen: '#39FF14',
-              neonGreenDim: '#28B20E',
-              darkGray: '#1A1A1A'
-            },
-            fontFamily: {
-              mono: ['JetBrains Mono', 'monospace']
-            }
-          }
-        }
-      }
-    </script>
     <style>
+      /* Integrated forensic theme styles to replace Tailwind for extension compliance */
+      :root {
+        --charcoal: #0A0A0A;
+        --neon-green: #39FF14;
+        --neon-green-dim: #28B20E;
+        --text-white: #FFFFFF;
+        --text-dim: rgba(255, 255, 255, 0.4);
+      }
       @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+      
       html, body {
         width: 380px;
         height: 600px;
         margin: 0;
         padding: 0;
-        background-color: #0A0A0A;
-        color: white;
+        background-color: var(--charcoal);
+        color: var(--text-white);
         overflow: hidden;
         font-family: 'JetBrains Mono', monospace;
       }
@@ -41,25 +32,37 @@
         display: flex;
         flex-direction: column;
       }
+      .neon-border { border: 1px solid var(--neon-green); }
+      .neon-text { color: var(--neon-green); }
+      .bg-charcoal { background-color: var(--charcoal); }
+      
+      /* Simple utility classes for the React app */
+      .flex { display: flex; }
+      .flex-col { flex-direction: column; }
+      .items-center { align-items: center; }
+      .justify-between { justify-content: space-between; }
+      .p-4 { padding: 1rem; }
+      .font-bold { font-weight: 700; }
+      .w-full { width: 100%; }
+      
       ::-webkit-scrollbar { width: 4px; }
-      ::-webkit-scrollbar-track { background: #0A0A0A; }
-      ::-webkit-scrollbar-thumb { background: #39FF14; }
+      ::-webkit-scrollbar-track { background: var(--charcoal); }
+      ::-webkit-scrollbar-thumb { background: var(--neon-green); }
     </style>
 <script type="importmap">
 {
   "imports": {
     "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/",
-    "react-dom": "https://esm.sh/react-dom@^19.2.3",
-    "react-dom/client": "https://esm.sh/react-dom@^19.2.3/client",
-    "@google/genai": "https://esm.sh/@google/genai@^1.37.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
+    "@google/genai": "https://esm.sh/@google/genai@^1.37.0"
   }
 }
 </script>
 </head>
 <body>
     <div id="root"></div>
+    <!-- In a real build environment, these would be local files -->
     <script type="module" src="index.tsx"></script>
 </body>
 </html>
