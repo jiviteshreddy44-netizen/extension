@@ -5,50 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>fakey.ai</title>
-    <style>
-      /* Integrated forensic theme styles to replace Tailwind for extension compliance */
-      :root {
-        --charcoal: #0A0A0A;
-        --neon-green: #39FF14;
-        --neon-green-dim: #28B20E;
-        --text-white: #FFFFFF;
-        --text-dim: rgba(255, 255, 255, 0.4);
-      }
-      @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
-      
-      html, body {
-        width: 380px;
-        height: 600px;
-        margin: 0;
-        padding: 0;
-        background-color: var(--charcoal);
-        color: var(--text-white);
-        overflow: hidden;
-        font-family: 'JetBrains Mono', monospace;
-      }
-      #root {
-        height: 100%;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-      }
-      .neon-border { border: 1px solid var(--neon-green); }
-      .neon-text { color: var(--neon-green); }
-      .bg-charcoal { background-color: var(--charcoal); }
-      
-      /* Simple utility classes for the React app */
-      .flex { display: flex; }
-      .flex-col { flex-direction: column; }
-      .items-center { align-items: center; }
-      .justify-between { justify-content: space-between; }
-      .p-4 { padding: 1rem; }
-      .font-bold { font-weight: 700; }
-      .w-full { width: 100%; }
-      
-      ::-webkit-scrollbar { width: 4px; }
-      ::-webkit-scrollbar-track { background: var(--charcoal); }
-      ::-webkit-scrollbar-thumb { background: var(--neon-green); }
-    </style>
+    <link rel="stylesheet" href="style.css">
 <script type="importmap">
 {
   "imports": {
@@ -62,7 +19,6 @@
 </head>
 <body>
     <div id="root"></div>
-    <!-- In a real build environment, these would be local files -->
     <script type="module" src="index.tsx"></script>
 </body>
 </html>

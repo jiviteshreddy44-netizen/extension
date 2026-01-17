@@ -6,8 +6,7 @@ declare const chrome: any;
 
 interface AnalysisResult {
   deepfake_score: number;
-  verdict: 'Likely Real' | 'Uncertain' | 'Likely Deepfake';
-  confidence: string;
+  verdict: string;
   integrity: { score: number; notes: string };
   consistency: { score: number; notes: string };
   ai_pattern: { score: number; notes: string };
@@ -59,21 +58,26 @@ export default function App() {
       setResult(JSON.parse(response.text || '{}'));
       setStatus(AppStatus.COMPLETED);
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || "Unknown analysis error");
       setStatus(AppStatus.ERROR);
     }
   };
 
   const startScan = () => {
     setStatus(AppStatus.SCANNING);
+    setError(null);
     if (typeof chrome !== 'undefined' && chrome.runtime) {
       chrome.runtime.sendMessage({ action: "capture_tab" }, (res: any) => {
-        if (res?.dataUrl) performAnalysis(res.dataUrl);
-        else {
-          setError(res?.error || "Capture failed");
+        if (res?.dataUrl) {
+          performAnalysis(res.dataUrl);
+        } else {
+          setError(res?.error || "Tab capture failed. Check permissions.");
           setStatus(AppStatus.ERROR);
         }
       });
+    } else {
+      setError("Extension environment unavailable.");
+      setStatus(AppStatus.ERROR);
     }
   };
 
@@ -90,7 +94,7 @@ export default function App() {
             <p style={{ fontSize: '12px', opacity: 0.7, marginBottom: '24px' }}>Forensic Neural Analysis Tool</p>
             <button 
               onClick={startScan}
-              style={{ width: '100%', padding: '16px', backgroundColor: '#39FF14', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}
+              style={{ width: '100%', padding: '16px', backgroundColor: '#39FF14', border: 'none', fontWeight: 'bold', cursor: 'pointer', color: '#000' }}
             >
               SCAN CURRENT TAB
             </button>
@@ -99,15 +103,13 @@ export default function App() {
 
         {status === AppStatus.SCANNING && (
           <div style={{ textAlign: 'center' }}>
-            <div style={{ width: '40px', height: '40px', border: '2px solid #39FF14', borderTopColor: 'transparent', borderRadius: '50%', margin: '0 auto 16px', animation: 'spin 1s linear infinite' }}></div>
-            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            <div className="spinner"></div>
             <p style={{ color: '#39FF14', fontSize: '12px' }}>ANALYZING ARTIFACTS...</p>
           </div>
         )}
 
         {status === AppStatus.COMPLETED && result && (
-          <div style={{ animation: 'fadeIn 0.5s' }}>
-            <style>{`@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }`}</style>
+          <div className="fade-in-container">
             <div style={{ padding: '20px', background: 'rgba(255,255,255,0.05)', textAlign: 'center', marginBottom: '16px' }}>
               <div style={{ fontSize: '42px', fontWeight: 'bold' }}>{result.deepfake_score}%</div>
               <div style={{ color: '#39FF14', fontSize: '12px', fontWeight: 'bold' }}>{result.verdict.toUpperCase()}</div>
@@ -122,8 +124,8 @@ export default function App() {
 
         {status === AppStatus.ERROR && (
           <div style={{ textAlign: 'center', color: '#ff4444' }}>
-            <p>Analysis Error</p>
-            <button onClick={() => setStatus(AppStatus.IDLE)} style={{ color: '#39FF14', background: 'none', border: 'none', textDecoration: 'underline' }}>Retry</button>
+            <p style={{ fontSize: '11px', marginBottom: '10px' }}>{error}</p>
+            <button onClick={() => setStatus(AppStatus.IDLE)} style={{ color: '#39FF14', background: 'none', border: 'none', textDecoration: 'underline', cursor: 'pointer' }}>Retry</button>
           </div>
         )}
       </main>

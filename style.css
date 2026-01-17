@@ -1,0 +1,58 @@
+
+:root {
+  --charcoal: #0A0A0A;
+  --neon-green: #39FF14;
+  --neon-green-dim: #28B20E;
+  --text-white: #FFFFFF;
+  --text-dim: rgba(255, 255, 255, 0.4);
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: local('JetBrains Mono');
+}
+
+html, body {
+  width: 380px;
+  height: 600px;
+  margin: 0;
+  padding: 0;
+  background-color: var(--charcoal);
+  color: var(--text-white);
+  overflow: hidden;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+#root {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--charcoal); }
+::-webkit-scrollbar-thumb { background: var(--neon-green); }
+
+@keyframes spin { 
+  to { transform: rotate(360deg); } 
+}
+
+@keyframes fadeIn { 
+  from { opacity: 0; } 
+  to { opacity: 1; } 
+}
+
+.spinner {
+  width: 40px; 
+  height: 40px; 
+  border: 2px solid var(--neon-green); 
+  border-top-color: transparent; 
+  border-radius: 50%; 
+  margin: 0 auto 16px; 
+  animation: spin 1s linear infinite;
+}
+
+.fade-in-container {
+  animation: fadeIn 0.5s forwards;
+}
