@@ -23,6 +23,9 @@
       "js": ["content.js"]
     }
   ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'unsafe-eval' https://cdn.tailwindcss.com https://esm.sh; object-src 'self'; connect-src 'self' https://esm.sh https://generativelanguage.googleapis.com"
+  },
   "web_accessible_resources": [
     {
       "resources": ["assets/*"],

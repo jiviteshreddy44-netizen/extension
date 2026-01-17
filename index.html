@@ -7,7 +7,7 @@
     <title>fakey.ai</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-      tailwind.config = {
+      window.tailwind.config = {
         theme: {
           extend: {
             colors: {
@@ -24,13 +24,18 @@
       }
     </script>
     <style>
-      body {
+      html, body {
         width: 380px;
-        min-height: 500px;
+        height: 600px;
         margin: 0;
+        padding: 0;
         background-color: #0A0A0A;
         color: white;
-        overflow-x: hidden;
+        overflow: hidden;
+      }
+      #root {
+        height: 100%;
+        width: 100%;
       }
       ::-webkit-scrollbar { width: 4px; }
       ::-webkit-scrollbar-track { background: #0A0A0A; }
@@ -39,8 +44,10 @@
 <script type="importmap">
 {
   "imports": {
-    "react/": "https://esm.sh/react@^19.2.3/",
     "react": "https://esm.sh/react@^19.2.3",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react-dom": "https://esm.sh/react-dom@^19.2.3",
+    "react-dom/client": "https://esm.sh/react-dom@^19.2.3/client",
     "@google/genai": "https://esm.sh/@google/genai@^1.37.0",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
   }
