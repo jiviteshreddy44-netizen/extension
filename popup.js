@@ -1,3 +1,5 @@
 
-// This file is required by manifest but our logic is handled by the React bundle
-// See index.tsx and App.tsx
+/**
+ * Redundant file. 
+ * Extension logic is bundled via index.tsx as an ES module in index.html.
+ */
