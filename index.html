@@ -1,0 +1,54 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>fakey.ai</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              charcoal: '#0A0A0A',
+              neonGreen: '#39FF14',
+              neonGreenDim: '#28B20E',
+              darkGray: '#1A1A1A'
+            },
+            fontFamily: {
+              mono: ['JetBrains Mono', 'monospace', 'ui-monospace']
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        width: 380px;
+        min-height: 500px;
+        margin: 0;
+        background-color: #0A0A0A;
+        color: white;
+        overflow-x: hidden;
+      }
+      ::-webkit-scrollbar { width: 4px; }
+      ::-webkit-scrollbar-track { background: #0A0A0A; }
+      ::-webkit-scrollbar-thumb { background: #39FF14; }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "@google/genai": "https://esm.sh/@google/genai@^1.37.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
+  }
+}
+</script>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="module" src="index.tsx"></script>
+</body>
+</html>

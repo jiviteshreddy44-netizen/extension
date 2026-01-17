@@ -1,0 +1,7 @@
+{
+  "name": "fakey.ai",
+  "description": "Professional deepfake and AI media verification tool for the browser.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
